@@ -1,0 +1,107 @@
+package forms
+
+import (
+	"net/http"
+	"net/url"
+	"entgo.io/ent/schema/field"
+	"github.com/mikestefanello/pagoda/ent/admin"
+	"github.com/mikestefanello/pagoda/pkg/routenames"
+	"github.com/mikestefanello/pagoda/pkg/ui"
+	"github.com/mikestefanello/pagoda/pkg/ui/components"
+)
+
+templ AdminEntity(r *ui.Request, entityType admin.EntityType, values url.Values) {
+	{{
+		isNew := values == nil
+		getValue := func(name string) string {
+			if value := r.Context.FormValue(name); value != "" {
+				return value
+			}
+			if values != nil && len(values[name]) > 0 {
+				return values[name][0]
+			}
+			return ""
+		}
+	}}
+	<form method={ http.MethodPost }>
+		for _, f := range entityType.GetSchema() {
+			if isNew || !f.Immutable {
+				if f.Type == field.TypeString {
+					{{
+						inputType := "text"
+						placeholder := ""
+						help := ""
+						if f.Sensitive {
+							inputType = "password"
+							if !isNew {
+								placeholder = "*****"
+								help = "SENSITIVE: This field will only be updated if a value is provided."
+							}
+						}
+					}}
+					@components.InputField(components.InputFieldParams{
+						Name:        f.Name,
+						InputType:   inputType,
+						Label:       admin.FieldLabel(f.Name),
+						Value:       getValue(f.Name),
+						Placeholder: placeholder,
+						Help:        help,
+					})
+				} else if f.Type == field.TypeTime {
+					@components.InputField(components.InputFieldParams{
+						Name:      f.Name,
+						InputType: "datetime-local",
+						Label:     admin.FieldLabel(f.Name),
+						Value:     getValue(f.Name),
+					})
+				} else if f.Type == field.TypeInt || f.Type == field.TypeInt8 || f.Type == field.TypeInt16 || f.Type == field.TypeInt32 || f.Type == field.TypeInt64 || f.Type == field.TypeUint || f.Type == field.TypeUint8 || f.Type == field.TypeUint16 || f.Type == field.TypeUint32 || f.Type == field.TypeUint64 || f.Type == field.TypeFloat32 || f.Type == field.TypeFloat64 {
+					@components.InputField(components.InputFieldParams{
+						Name:      f.Name,
+						InputType: "number",
+						Label:     admin.FieldLabel(f.Name),
+						Value:     getValue(f.Name),
+					})
+				} else if f.Type == field.TypeBool {
+					@components.Checkbox(components.CheckboxParams{
+						Name:    f.Name,
+						Label:   admin.FieldLabel(f.Name),
+						Checked: getValue(f.Name) == "true",
+					})
+				} else if f.Type == field.TypeEnum {
+					{{
+						options := make([]components.Choice, 0, len(f.Enums)+1)
+						if f.Optional {
+							options = append(options, components.Choice{
+								Label: "-",
+								Value: "",
+							})
+						}
+						for _, enum := range f.Enums {
+							options = append(options, components.Choice{
+								Label: enum,
+								Value: enum,
+							})
+						}
+					}}
+					@components.SelectList(components.OptionsParams{
+						Name:    f.Name,
+						Label:   admin.FieldLabel(f.Name),
+						Value:   getValue(f.Name),
+						Options: options,
+					})
+				} else {
+					<p>{ f.Name } not supported</p>
+				}
+			}
+		}
+		@components.ControlGroup(
+			components.FormButton(components.ColorPrimary, "Submit"),
+			components.ButtonLink(
+				components.ColorNone,
+				r.Path(routenames.AdminEntityList(entityType.GetName())),
+				"Cancel",
+			),
+		)
+		@components.CSRF(r)
+	</form>
+}

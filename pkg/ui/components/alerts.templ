@@ -1,0 +1,37 @@
+package components
+
+import (
+	"github.com/mikestefanello/pagoda/pkg/msg"
+	"github.com/mikestefanello/pagoda/pkg/ui"
+	"github.com/mikestefanello/pagoda/pkg/ui/icons"
+)
+
+templ FlashMessages(r *ui.Request) {
+	for _, typ := range []msg.Type{msg.TypeSuccess, msg.TypeInfo, msg.TypeWarning, msg.TypeError} {
+		for _, str := range msg.Get(r.Context, typ) {
+			@Alert(typ, str)
+		}
+	}
+}
+
+templ Alert(typ msg.Type, text string) {
+	{{
+		var class string
+		switch typ {
+		case msg.TypeSuccess:
+			class = "alert-success"
+		case msg.TypeInfo:
+			class = "alert-info"
+		case msg.TypeWarning:
+			class = "alert-warning"
+		case msg.TypeError:
+			class = "alert-error"
+		}
+	}}
+	<div role="alert" class={ "alert mb-2", class } x-data="{show: true}" x-show="show">
+		<span @click="show = false" class="cursor-pointer">
+			@icons.XCircle()
+		</span>
+		<span>{ text }</span>
+	</div>
+}

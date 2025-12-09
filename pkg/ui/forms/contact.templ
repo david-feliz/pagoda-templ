@@ -1,0 +1,52 @@
+package forms
+
+import (
+	"net/http"
+	"github.com/mikestefanello/pagoda/pkg/form"
+	"github.com/mikestefanello/pagoda/pkg/routenames"
+	"github.com/mikestefanello/pagoda/pkg/ui"
+	"github.com/mikestefanello/pagoda/pkg/ui/components"
+)
+
+type Contact struct {
+	Email      string `form:"email" validate:"required,email"`
+	Department string `form:"department" validate:"required,oneof=sales marketing hr"`
+	Message    string `form:"message" validate:"required"`
+	form.Submission
+}
+
+templ (f *Contact) Render(r *ui.Request) {
+	<form id="contact" method={ http.MethodPost } hx-post={ r.Path(routenames.ContactSubmit) }>
+		@components.InputField(components.InputFieldParams{
+			Form:      f,
+			FormField: "Email",
+			Name:      "email",
+			InputType: "email",
+			Label:     "Email address",
+			Value:     f.Email,
+		})
+		@components.Radios(components.OptionsParams{
+			Form:      f,
+			FormField: "Department",
+			Name:      "department",
+			Label:     "Department",
+			Value:     f.Department,
+			Options: []components.Choice{
+				{Value: "sales", Label: "Sales"},
+				{Value: "marketing", Label: "Marketing"},
+				{Value: "hr", Label: "HR"},
+			},
+		})
+		@components.TextareaField(components.TextareaFieldParams{
+			Form:      f,
+			FormField: "Message",
+			Name:      "message",
+			Label:     "Message",
+			Value:     f.Message,
+		})
+		@components.ControlGroup(
+			components.FormButton(components.ColorPrimary, "Submit"),
+		)
+		@components.CSRF(r)
+	</form>
+}

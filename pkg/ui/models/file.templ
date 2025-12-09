@@ -1,0 +1,30 @@
+package models
+
+import (
+	"fmt"
+)
+
+type File struct {
+	Name     string
+	Size     int64
+	Modified string
+}
+
+templ (f *File) Render() {
+	<tr>
+		<td>{ f.Name }</td>
+		<td>{ fmt.Sprint(f.Size) }</td>
+		<td>{ f.Modified }</td>
+	</tr>
+}
+
+type SearchResult struct {
+	Title string
+	URL   string
+}
+
+templ (s *SearchResult) Render() {
+	<li class="list-row">
+		<a href={ templ.URL(s.URL) }>{ s.Title }</a>
+	</li>
+}

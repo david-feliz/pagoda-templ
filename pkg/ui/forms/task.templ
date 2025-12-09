@@ -1,0 +1,43 @@
+package forms
+
+import (
+	"fmt"
+	"net/http"
+	"github.com/mikestefanello/pagoda/pkg/form"
+	"github.com/mikestefanello/pagoda/pkg/routenames"
+	"github.com/mikestefanello/pagoda/pkg/ui"
+	"github.com/mikestefanello/pagoda/pkg/ui/components"
+)
+
+type Task struct {
+	Delay   int    `form:"delay" validate:"gte=0"`
+	Message string `form:"message" validate:"required"`
+	form.Submission
+}
+
+templ (f *Task) Render(r *ui.Request) {
+	<form id="task" method={ http.MethodPost } hx-post={ r.Path(routenames.TaskSubmit) }>
+		@components.FlashMessages(r)
+		@components.InputField(components.InputFieldParams{
+			Form:      f,
+			FormField: "Delay",
+			Name:      "delay",
+			InputType: "number",
+			Label:     "Delay (in seconds)",
+			Help:      "How long to wait until the task is executed",
+			Value:     fmt.Sprint(f.Delay),
+		})
+		@components.TextareaField(components.TextareaFieldParams{
+			Form:      f,
+			FormField: "Message",
+			Name:      "message",
+			Label:     "Message",
+			Value:     f.Message,
+			Help:      "The message the task will output to the log",
+		})
+		@components.ControlGroup(
+			components.FormButton(components.ColorPrimary, "Add task to queue"),
+		)
+		@components.CSRF(r)
+	</form>
+}

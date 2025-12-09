@@ -1,0 +1,58 @@
+package components
+
+import (
+	"fmt"
+	"github.com/mikestefanello/pagoda/pkg/pager"
+	"github.com/mikestefanello/pagoda/pkg/ui"
+)
+
+templ MenuLink(r *ui.Request, icon templ.Component, title, routeName string, routeParams ...any) {
+	{{ href := r.Path(routeName, routeParams...) }}
+	<li class="ml-2">
+		<a href={ templ.URL(href) } class={ "p-2", templ.KV("menu-active", href == r.CurrentPath) }>
+			@icon
+			{ title }
+		</a>
+	</li>
+}
+
+templ Pager(page int, path string, hasNext bool, hxTarget string) {
+	{{
+		href := func(p int) string {
+			return fmt.Sprintf("%s?%s=%d", path, pager.QueryKey, p)
+		}
+	}}
+	<div class="join">
+		<a
+			class="join-item btn"
+			if page <= 1 {
+				disabled
+			}
+			href={ templ.URL(href(page - 1)) }
+			if len(hxTarget) > 0 {
+				hx-get={ href(page - 1) }
+				hx-swap="outerHTML"
+				hx-target={ hxTarget }
+			}
+		>
+			«
+		</a>
+		<button class="join-item btn">
+			{ fmt.Sprintf("Page %d", page) }
+		</button>
+		<a
+			class="join-item btn"
+			if !hasNext {
+				disabled
+			}
+			href={ templ.URL(href(page + 1)) }
+			if len(hxTarget) > 0 {
+				hx-get={ href(page + 1) }
+				hx-swap="outerHTML"
+				hx-target={ hxTarget }
+			}
+		>
+			»
+		</a>
+	</div>
+}

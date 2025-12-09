@@ -1,0 +1,24 @@
+package forms
+
+import (
+	"net/http"
+	"github.com/mikestefanello/pagoda/pkg/routenames"
+	"github.com/mikestefanello/pagoda/pkg/ui"
+	"github.com/mikestefanello/pagoda/pkg/ui/components"
+)
+
+type File struct{}
+
+templ (f File) Render(r *ui.Request) {
+	<form id="files" method={ http.MethodPost } action={ templ.URL(r.Path(routenames.FilesSubmit)) } enctype="multipart/form-data">
+		@components.FileField(components.FileFieldParams{
+			Name:  "file",
+			Label: "Test file",
+			Help:  "Pick a file to upload.",
+		})
+		@components.ControlGroup(
+			components.FormButton(components.ColorPrimary, "Upload"),
+		)
+		@components.CSRF(r)
+	</form>
+}

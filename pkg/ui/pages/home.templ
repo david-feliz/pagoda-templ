@@ -1,0 +1,95 @@
+package pages
+
+import (
+	"github.com/labstack/echo/v4"
+	"github.com/mikestefanello/pagoda/pkg/routenames"
+	"github.com/mikestefanello/pagoda/pkg/ui"
+	"github.com/mikestefanello/pagoda/pkg/ui/components"
+	"github.com/mikestefanello/pagoda/pkg/ui/icons"
+	"github.com/mikestefanello/pagoda/pkg/ui/layouts"
+	"github.com/mikestefanello/pagoda/pkg/ui/models"
+)
+
+func Home(ctx echo.Context, posts *models.Posts) error {
+	r := ui.NewRequest(ctx)
+	r.Metatags.Description = "This is the home page."
+	r.Metatags.Keywords = []string{"Software", "Coding", "Go"}
+
+	return r.RenderTempl(layouts.Primary, HomeContent(r, posts))
+}
+
+templ HomeContent(r *ui.Request, posts *models.Posts) {
+	if r.Htmx.Target != "posts" {
+		@headerMsg(r)
+	}
+	@posts.Render(r.Path(routenames.Home))
+	if r.Htmx.Target != "posts" {
+		@cards()
+	}
+}
+
+templ headerMsg(r *ui.Request) {
+	{{
+		userName := "(not logged in)"
+		if r.IsAuth {
+			userName = r.AuthUser.Name
+		}
+		adminStatus := "Non-administrator"
+		if r.IsAdmin {
+			adminStatus = "Administrator"
+		}
+	}}
+	@components.Stats(
+		components.Stat{
+			Title:       "User name",
+			Value:       userName,
+			Description: "The logged in user's name",
+			Icon:        icons.UserCircle(),
+		},
+		components.Stat{
+			Title:       "Admin status",
+			Value:       adminStatus,
+			Description: "Use `make admin` to create an admin account",
+			Icon:        icons.LockClosed(),
+		},
+		components.Stat{
+			Title:       "GitHub Stars",
+			Value:       "2,500+",
+			Description: "Star if you like Pagoda",
+			Icon:        icons.Star(),
+		},
+	)
+	<h2>Recent posts</h2>
+	<span>Below is an example of both paging and AJAX fetching using HTMX</span>
+}
+
+templ cards() {
+	<div class="flex w-full gap-2 mt-5">
+		@components.Card(components.CardParams{
+			Title: "Serving files",
+			Body:  servingFilesBody(),
+			Color: components.ColorWarning,
+			Size:  components.SizeSmall,
+		})
+		@components.Card(components.CardParams{
+			Title:  "Documentation",
+			Body:   documentationBody(),
+			Footer: documentationFooter(),
+			Color:  components.ColorNeutral,
+			Size:   components.SizeSmall,
+		})
+	</div>
+}
+
+templ servingFilesBody() {
+	In the example posts above, check how the file URL contains a cache-buster query parameter which changes only when the app is restarted. 
+	Static files also contain cache-control headers which are configured via middleware.
+}
+
+templ documentationBody() {
+	Have you read through the entire documentation? If not, you may be missing functionality or have questions. 
+}
+
+templ documentationFooter() {
+	@components.ButtonLink(components.ColorNeutral, "https://github.com/mikestefanello/pagoda?tab=readme-ov-file#table-of-contents", "Learn more")
+}

@@ -1,5 +1,7 @@
 ## Pagoda: Rapid, easy full-stack web development starter kit in Go
 
+> **Note**: This is a fork of [mikestefanello/pagoda](https://github.com/mikestefanello/pagoda) that uses [Templ](https://templ.guide/) instead of [Gomponents](https://github.com/maragudk/gomponents) for HTML templating. The original project uses Gomponents for type-safe HTML generation in pure Go, while this fork leverages Templ's templating language for a different developer experience.
+
 [![Go Report Card](https://goreportcard.com/badge/github.com/mikestefanello/pagoda)](https://goreportcard.com/report/github.com/mikestefanello/pagoda)
 [![Test](https://github.com/mikestefanello/pagoda/actions/workflows/test.yml/badge.svg)](https://github.com/mikestefanello/pagoda/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -122,7 +124,7 @@ While many great projects were used to build this, all of which are listed in th
 
 - [Echo](https://echo.labstack.com/): High performance, extensible, minimalist Go web framework.
 - [Ent](https://entgo.io/): Simple, yet powerful ORM for modeling and querying data.
-- [Gomponents](https://github.com/maragudk/gomponents): HTML components written in pure Go. They render to HTML 5, and make it easy for you to build reusable components.
+- [Templ](https://templ.guide/): A templating language for Go that allows you to write type-safe HTML templates with IDE support and hot reloading.
 
 #### Frontend
 
@@ -587,15 +589,21 @@ assert.Equal(t, "About", h1.Text())
 
 ## User interface
 
-### Why Gomponents?
+### Why Templ?
 
-Originally, standard Go templates were chosen for this project and a lot of code was written to build tools to make using them as easy and flexible as possible. That code remains archived in [this branch](https://github.com/mikestefanello/pagoda/tree/templates) but is no longer maintained. Despite providing tools such as a powerful _template renderer_, which did things like automatically compile nested templates to separate layouts from pages, automatically include component templates, support HTMX partial rendering, provide _funcmap_ function helpers, and more, the end result left a lot to be desired. Templates provide no type-safety, child templates are difficult to call when you have multiple arguments, templates are not flexible enough to easily provide reusable components and elements, the _funcmap_ and form submission code often had to return HTML or CSS classes, and more.
+This fork diverges from the original Pagoda project by using [Templ](https://templ.guide/) instead of [Gomponents](https://github.com/maragudk/gomponents) for HTML templating.
 
-While I was extremely hesitant to adopt a rendering option outside the standard library, if an option exists that I personally feel is far superior, that is what I'm going to go with. [Templ](https://github.com/a-h/templ) was also a consideration as that project has made massive progress, seen an explosion in adoption, and aims to solve all the problems previously mentioned. I did not feel that it was a good fit for this project though as it requires you to know and understand their templating language, to install a CLI and an IDE plugin (which does not work with all IDEs; especially GoLand), and separately compile template code.
+While the original project chose Gomponents for its pure Go approach to HTML generation, this fork opts for Templ to provide:
 
-[Gomponents](https://github.com/maragudk/gomponents) allows you to build HTML using nothing except pure, type-safe Go; whether that's entire documents or dynamic, reusable components. [Here](https://www.gomponents.com/) are some basic examples to give you an idea of how it works and [this tool](https://gomponents.morehart.dev/) is incredibly useful for quickly converting HTML to _gomponent_ Go code. When I first came across this library, I was very much against it, and couldn't imagine writing tons of nested function calls just to produce some HTML; especially for complex markup. But after actually spending some time using it to replicate the UI of this project, and feeling the downsides of Go templates, I quickly became a big fan and supporter of this approach. Between this and the chosen JS/CSS libraries, you can literally write your entire frontend without leaving Go.
+- **Familiar templating syntax**: Templ uses a templating language similar to JSX/TSX, making it more approachable for developers coming from frontend frameworks
+- **IDE support**: First-class support for syntax highlighting, autocompletion, and refactoring in modern IDEs
+- **Type safety**: Like Gomponents, Templ provides compile-time type checking for your templates
+- **Hot reloading**: Templ integrates seamlessly with development workflows and supports hot reloading
+- **Separation of concerns**: Template files (`.templ`) are separate from Go logic, which some developers prefer
 
-Before making any quick judgements of your own, I ask that you deeply consider what you've used in the past, review what previously existed in this project, and compare to the current solution and code presented here. I believe I've laid out the `ui` package in a way that makes building your frontend with _gomponents_ very easy and enjoyable.
+The original Pagoda documentation explains the evolution from Go templates to Gomponents. This fork represents an alternative path - using Templ's templating language instead of pure Go functions. Both approaches solve the same problems (type safety, reusability, avoiding template string issues) but with different philosophies.
+
+All `.templ` files in this project are compiled to `_templ.go` files, which are then used by the application. The Templ compiler must be installed and run as part of the build process (see [Installing tools](#installing-tools)).
 
 ### HTMX support
 

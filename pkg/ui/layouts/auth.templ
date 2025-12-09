@@ -1,0 +1,33 @@
+package layouts
+
+import (
+	"github.com/mikestefanello/pagoda/pkg/ui"
+	"github.com/mikestefanello/pagoda/pkg/ui/components"
+)
+
+templ Auth(r *ui.Request, content templ.Component) {
+	<!DOCTYPE html>
+	<html lang="en" data-theme="dark">
+		<head>
+			@components.Metatags(r)
+			@components.CSS()
+			@components.JS()
+		</head>
+		<body>
+			<div class="hero flex items-center justify-center min-h-screen">
+				<div class="flex-col hero-content">
+					<div class="card shadow-md bg-base-200 w-96">
+						<div class="card-body">
+							if len(r.Title) > 0 {
+								<h1 class="text-2xl font-bold">{ r.Title }</h1>
+							}
+							@components.FlashMessages(r)
+							@content
+						</div>
+					</div>
+				</div>
+			</div>
+			@components.HtmxListeners(r)
+		</body>
+	</html>
+}

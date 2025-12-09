@@ -1,0 +1,33 @@
+package components
+
+import (
+	"github.com/mikestefanello/pagoda/pkg/ui"
+	"strings"
+)
+
+templ JS() {
+	<script src="https://unpkg.com/htmx.org@2.0.0/dist/htmx.min.js" defer></script>
+	<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+}
+
+templ CSS() {
+	<link href={ ui.StaticFile("main.css") } rel="stylesheet" type="text/css"/>
+}
+
+templ Metatags(r *ui.Request) {
+	<meta charset="utf-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1"/>
+	<link rel="icon" href={ ui.StaticFile("favicon.png") }/>
+	<title>
+		{ r.Config.App.Name }
+		if r.Title != "" {
+			{ " | " + r.Title }
+		}
+	</title>
+	if r.Metatags.Description != "" {
+		<meta name="description" content={ r.Metatags.Description }/>
+	}
+	if len(r.Metatags.Keywords) > 0 {
+		<meta name="keywords" content={ strings.Join(r.Metatags.Keywords, ", ") }/>
+	}
+}

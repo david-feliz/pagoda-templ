@@ -17,7 +17,6 @@ import (
 	"github.com/mikestefanello/pagoda/pkg/redirect"
 	"github.com/mikestefanello/pagoda/pkg/routenames"
 	"github.com/mikestefanello/pagoda/pkg/services"
-	"github.com/mikestefanello/pagoda/pkg/ui/emails"
 	"github.com/mikestefanello/pagoda/pkg/ui/forms"
 	"github.com/mikestefanello/pagoda/pkg/ui/pages"
 )
@@ -267,11 +266,12 @@ func (h *Auth) sendVerificationEmail(ctx echo.Context, usr *ent.User) {
 	}
 
 	// Send the email.
+	// TODO: Implement email template
 	err = h.mail.
 		Compose().
 		To(usr.Email).
 		Subject("Confirm your email address").
-		Component(emails.ConfirmEmailAddress(ctx, usr.Name, token)).
+		Body(fmt.Sprintf("Click here to verify your email: %s", h.config.App.Host+ctx.Echo().Reverse(routenames.VerifyEmail, token))).
 		Send(ctx)
 
 	if err != nil {

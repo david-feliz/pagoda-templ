@@ -1,0 +1,24 @@
+package forms
+
+import (
+	"net/http"
+	"github.com/mikestefanello/pagoda/ent/admin"
+	"github.com/mikestefanello/pagoda/pkg/routenames"
+	"github.com/mikestefanello/pagoda/pkg/ui"
+	"github.com/mikestefanello/pagoda/pkg/ui/components"
+)
+
+templ AdminEntityDelete(r *ui.Request, entityType admin.EntityType) {
+	<form method={ http.MethodPost }>
+		<p>Are you sure you want to delete this { entityType.GetName() }?</p>
+		@components.ControlGroup(
+			components.FormButton(components.ColorError, "Delete"),
+			components.ButtonLink(
+				components.ColorNone,
+				r.Path(routenames.AdminEntityList(entityType.GetName())),
+				"Cancel",
+			),
+		)
+		@components.CSRF(r)
+	</form>
+}

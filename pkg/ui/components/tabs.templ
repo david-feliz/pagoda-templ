@@ -1,0 +1,30 @@
+package components
+
+import (
+	"fmt"
+	"math/rand"
+)
+
+type Tab struct {
+	Title, Body string
+}
+
+templ Tabs(tabs []Tab) {
+	{{ id := fmt.Sprintf("tabs-%d", rand.Int()) }}
+	<div class="tabs tabs-lift">
+		for i, tab := range tabs {
+			<input
+				type="radio"
+				name={ id }
+				class="tab"
+				aria-label={ tab.Title }
+				if i == 0 {
+					checked
+				}
+			/>
+			<div class="tab-content bg-base-100 border-base-300 p-6">
+				@templ.Raw(tab.Body)
+			</div>
+		}
+	</div>
+}

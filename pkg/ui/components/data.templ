@@ -1,0 +1,99 @@
+package components
+
+
+
+type CardParams struct {
+	Title  string
+	Body   templ.Component
+	Footer templ.Component
+	Color  Color
+	Size   Size
+}
+
+type Stat struct {
+	Title       string
+	Value       string
+	Description string
+	Icon        templ.Component
+}
+
+templ Badge(color Color, text string) {
+	{{
+		var class string
+		switch color {
+		case ColorSuccess:
+			class = "badge-success"
+		case ColorWarning:
+			class = "badge-warning"
+		}
+	}}
+	<div class={ "badge", class }>
+		{ text }
+	</div>
+}
+
+templ Divider(text string) {
+	<div class="divider">
+		{ text }
+	</div>
+}
+
+templ Card(params CardParams) {
+	{{
+		var colorClass, sizeClass string
+
+		switch params.Color {
+		case ColorSuccess:
+			colorClass = "bg-success text-success-content"
+		case ColorPrimary:
+			colorClass = "bg-primary text-primary-content"
+		case ColorAccent:
+			colorClass = "bg-accent text-accent-content"
+		case ColorNeutral:
+			colorClass = "bg-neutral text-neutral-content"
+		case ColorWarning:
+			colorClass = "bg-warning text-warning-content"
+		case ColorInfo:
+			colorClass = "bg-info text-info-content"
+		}
+
+		switch params.Size {
+		case SizeSmall:
+			sizeClass = "card-sm"
+		case SizeMedium:
+			sizeClass = "card-md"
+		case SizeLarge:
+			sizeClass = "card-lg"
+		}
+	}}
+	<div class={ "cards mb-2", colorClass, sizeClass }>
+		<div class="card-body">
+			if len(params.Title) > 0 {
+				<span class="card-title">{ params.Title }</span>
+			}
+			@params.Body
+			if params.Footer != nil {
+				<div class="card-actions justify-end">
+					@params.Footer
+				</div>
+			}
+		</div>
+	</div>
+}
+
+templ Stats(stats ...Stat) {
+	<div class="stats shadow">
+		for _, stat := range stats {
+			<div class="stat">
+				if stat.Icon != nil {
+					<div class="stat-figure text-secondary">
+						@stat.Icon
+					</div>
+				}
+				<div class="stat-title">{ stat.Title }</div>
+				<div class="stat-value">{ stat.Value }</div>
+				<div class="stat-desc">{ stat.Description }</div>
+			</div>
+		}
+	</div>
+}

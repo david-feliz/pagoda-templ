@@ -1,0 +1,234 @@
+package components
+
+import (
+	"github.com/mikestefanello/pagoda/pkg/form"
+	"github.com/mikestefanello/pagoda/pkg/ui"
+)
+
+type InputFieldParams struct {
+	Form        form.Form
+	FormField   string
+	Name        string
+	InputType   string
+	Label       string
+	Value       string
+	Placeholder string
+	Help        string
+}
+
+type FileFieldParams struct {
+	Name  string
+	Label string
+	Help  string
+}
+
+type OptionsParams struct {
+	Form      form.Form
+	FormField string
+	Name      string
+	Label     string
+	Value     string
+	Options   []Choice
+	Help      string
+}
+
+type Choice struct {
+	Value string
+	Label string
+}
+
+type TextareaFieldParams struct {
+	Form      form.Form
+	FormField string
+	Name      string
+	Label     string
+	Value     string
+	Help      string
+}
+
+type CheckboxParams struct {
+	Form      form.Form
+	FormField string
+	Name      string
+	Label     string
+	Checked   bool
+}
+
+templ ControlGroup(controls ...templ.Component) {
+	<div class="mt-2 flex gap-2">
+		for _, control := range controls {
+			@control
+		}
+	</div>
+}
+
+templ TextareaField(el TextareaFieldParams) {
+	@Fieldset(el.Label, TextareaFieldContent(el))
+}
+
+templ TextareaFieldContent(el TextareaFieldParams) {
+	<textarea
+		class={ "textarea h-24 w-2/3", formFieldStatusClass(el.Form, el.FormField) }
+		id={ el.Name }
+		name={ el.Name }
+	>{ el.Value }</textarea>
+	@Help(el.Help)
+	@formFieldErrors(el.Form, el.FormField)
+}
+
+templ Radios(el OptionsParams) {
+	@Fieldset(el.Label, RadiosContent(el))
+}
+
+templ RadiosContent(el OptionsParams) {
+	for _, opt := range el.Options {
+		{{ id := "radio-" + el.Name + "-" + opt.Value }}
+		<div class="mb-2">
+			<input
+				id={ id }
+				type="radio"
+				name={ el.Name }
+				value={ opt.Value }
+				class={ "radio mr-1", formFieldStatusClass(el.Form, el.FormField) }
+				if el.Value == opt.Value {
+					checked
+				}
+			/>
+			<label for={ id }>{ opt.Label }</label>
+		</div>
+	}
+	@formFieldErrors(el.Form, el.FormField)
+}
+
+templ SelectList(el OptionsParams) {
+	@Fieldset(el.Label, SelectListContent(el))
+}
+
+templ SelectListContent(el OptionsParams) {
+	<select
+		class={ "select", formFieldStatusClass(el.Form, el.FormField) }
+		name={ el.Name }
+	>
+		for _, opt := range el.Options {
+			<option value={ opt.Value } if opt.Value == el.Value {
+				selected
+			}>{ opt.Label }</option>
+		}
+	</select>
+	@Help(el.Help)
+	@formFieldErrors(el.Form, el.FormField)
+}
+
+templ Checkbox(el CheckboxParams) {
+	<div>
+		<label class="label">
+			<input
+				class="checkbox"
+				type="checkbox"
+				name={ el.Name }
+				if el.Checked {
+					checked
+				}
+				value="true"
+			/>
+			{ " " + el.Label }
+		</label>
+		@formFieldErrors(el.Form, el.FormField)
+	</div>
+}
+
+templ InputField(el InputFieldParams) {
+	@Fieldset(el.Label, InputFieldContent(el))
+}
+
+templ InputFieldContent(el InputFieldParams) {
+	<input
+		id={ el.Name }
+		name={ el.Name }
+		type={ el.InputType }
+		class={ "input", formFieldStatusClass(el.Form, el.FormField) }
+		value={ el.Value }
+		if el.Placeholder != "" {
+			placeholder={ el.Placeholder }
+		}
+	/>
+	@Help(el.Help)
+	@formFieldErrors(el.Form, el.FormField)
+}
+
+templ Help(text string) {
+	if len(text) > 0 {
+		<div class="label">{ text }</div>
+	}
+}
+
+templ Fieldset(label string, content templ.Component) {
+	<fieldset class="fieldset">
+		if len(label) > 0 {
+			<legend class="fieldset-legend">{ label }</legend>
+		}
+		@content
+	</fieldset>
+}
+
+templ FileField(el FileFieldParams) {
+	@Fieldset(el.Label, FileFieldContent(el))
+}
+
+templ FileFieldContent(el FileFieldParams) {
+	<input type="file" class="file-input" name={ el.Name }/>
+	@Help(el.Help)
+}
+
+func formFieldStatusClass(fm form.Form, formField string) string {
+	switch {
+	case fm == nil:
+		return ""
+	case !fm.IsSubmitted():
+		return ""
+	case fm.FieldHasErrors(formField):
+		return "input-error"
+	default:
+		return "input-success"
+	}
+}
+
+templ formFieldErrors(fm form.Form, field string) {
+	if fm != nil {
+		{{ errs := fm.GetFieldErrors(field) }}
+		if len(errs) > 0 {
+			for _, err := range errs {
+				<div class="text-error">{ err }</div>
+			}
+		}
+	}
+}
+
+templ CSRF(r *ui.Request) {
+	<input type="hidden" name="csrf" value={ r.CSRF }/>
+}
+
+templ FormButton(color Color, label string) {
+	<button class={ "btn", buttonColor(color) }>{ label }</button>
+}
+
+templ ButtonLink(color Color, href, label string) {
+	<a href={ templ.URL(href) } class={ "btn", buttonColor(color) }>{ label }</a>
+}
+
+func buttonColor(color Color) string {
+	switch color {
+	case ColorPrimary:
+		return "btn-primary"
+	case ColorInfo:
+		return "btn-info"
+	case ColorAccent:
+		return "btn-accent"
+	case ColorError:
+		return "btn-error"
+	case ColorLink:
+		return "btn-link"
+	default:
+		return ""
+	}
+}

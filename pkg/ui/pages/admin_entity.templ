@@ -1,0 +1,98 @@
+package pages
+
+import (
+	"fmt"
+	"net/url"
+	"github.com/labstack/echo/v4"
+	"github.com/mikestefanello/pagoda/ent/admin"
+	"github.com/mikestefanello/pagoda/pkg/routenames"
+	"github.com/mikestefanello/pagoda/pkg/ui"
+	"github.com/mikestefanello/pagoda/pkg/ui/components"
+	"github.com/mikestefanello/pagoda/pkg/ui/forms"
+	"github.com/mikestefanello/pagoda/pkg/ui/layouts"
+)
+
+func AdminEntityDelete(ctx echo.Context, entityType admin.EntityType) error {
+	r := ui.NewRequest(ctx)
+	r.Title = fmt.Sprintf("Delete %s", entityType.GetName())
+
+	return r.RenderTempl(
+		layouts.Primary,
+		forms.AdminEntityDelete(r, entityType),
+	)
+}
+
+func AdminEntityInput(ctx echo.Context, entityType admin.EntityType, values url.Values) error {
+	r := ui.NewRequest(ctx)
+	if values == nil {
+		r.Title = fmt.Sprintf("Add %s", entityType.GetName())
+	} else {
+		r.Title = fmt.Sprintf("Edit %s", entityType.GetName())
+	}
+
+	return r.RenderTempl(
+		layouts.Primary,
+		forms.AdminEntity(r, entityType, values),
+	)
+}
+
+func AdminEntityList(
+	ctx echo.Context,
+	entityType admin.EntityType,
+	entityList *admin.EntityList,
+) error {
+	r := ui.NewRequest(ctx)
+	r.Title = entityType.GetName()
+
+	return r.RenderTempl(layouts.Primary, AdminEntityListContent(r, entityType, entityList))
+}
+
+templ AdminEntityListContent(r *ui.Request, entityType admin.EntityType, entityList *admin.EntityList) {
+	<div class="form-control mb-2">
+		@components.ButtonLink(
+			components.ColorAccent,
+			r.Path(routenames.AdminEntityAdd(entityType.GetName())),
+			fmt.Sprintf("Add %s", entityType.GetName()),
+		)
+	</div>
+	<table class="table table-zebra mb-2">
+		<thead>
+			<tr>
+				<th>ID</th>
+				for _, h := range entityList.Columns {
+					<th>{ h }</th>
+				}
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			for _, row := range entityList.Entities {
+				<tr>
+					<th>{ fmt.Sprint(row.ID) }</th>
+					for _, val := range row.Values {
+						<td>{ val }</td>
+					}
+					<td>
+						@components.ButtonLink(
+							components.ColorInfo,
+							r.Path(routenames.AdminEntityEdit(entityType.GetName()), row.ID),
+							"Edit",
+						)
+						<span class="mr-2"></span>
+						@components.ButtonLink(
+							components.ColorError,
+							r.Path(routenames.AdminEntityDelete(entityType.GetName()), row.ID),
+							"Delete",
+						)
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+	@components.Pager(
+		entityList.Page,
+		r.Path(routenames.AdminEntityAdd(entityType.GetName())),
+		entityList.HasNextPage,
+		"",
+	)
+}

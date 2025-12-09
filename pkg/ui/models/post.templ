@@ -1,0 +1,45 @@
+package models
+
+import (
+	"fmt"
+	"github.com/mikestefanello/pagoda/pkg/pager"
+	"github.com/mikestefanello/pagoda/pkg/ui"
+	"github.com/mikestefanello/pagoda/pkg/ui/components"
+)
+
+type Posts struct {
+	Posts []Post
+	Pager pager.Pager
+}
+
+type Post struct {
+	ID          int
+	Title, Body string
+}
+
+templ (p *Posts) Render(path string) {
+	<div id="posts">
+		<ul class="list bg-base-100 rounded-box shadow-md not-prose">
+			for _, post := range p.Posts {
+				@post.Render()
+			}
+		</ul>
+		<div class="mb-4"></div>
+		@components.Pager(p.Pager.Page, path, !p.Pager.IsEnd(), "#posts")
+	</div>
+}
+
+templ (p *Post) Render() {
+	<li class="list-row">
+		<div class="text-4xl font-thin opacity-30 tabular-nums">
+			{ fmt.Sprintf("%02d", p.ID) }
+		</div>
+		<div>
+			<img class="size-10 rounded-box" src={ ui.StaticFile("gopher.png") } alt="Gopher"/>
+		</div>
+		<div class="list-col-grow">
+			<div>{ p.Title }</div>
+			<div class="text-xs font-semibold opacity-60">{ p.Body }</div>
+		</div>
+	</li>
+}

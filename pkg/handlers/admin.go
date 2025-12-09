@@ -140,14 +140,14 @@ func (h *Admin) EntityAddSubmit(n admin.EntityType) echo.HandlerFunc {
 
 func (h *Admin) EntityEdit(n admin.EntityType) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		v := ctx.Get(context.AdminEntityKey).(map[string][]string)
+		v, _ := ctx.Get(context.AdminEntityKey).(map[string][]string)
 		return pages.AdminEntityInput(ctx, n, v)
 	}
 }
 
 func (h *Admin) EntityEditSubmit(n admin.EntityType) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		id := ctx.Get(context.AdminEntityIDKey).(int)
+		id, _ := ctx.Get(context.AdminEntityIDKey).(int)
 		err := h.admin.Update(ctx, n, id)
 		if err != nil {
 			msg.Error(ctx, err.Error())
@@ -172,7 +172,7 @@ func (h *Admin) EntityDelete(n admin.EntityType) echo.HandlerFunc {
 
 func (h *Admin) EntityDeleteSubmit(n admin.EntityType) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		id := ctx.Get(context.AdminEntityIDKey).(int)
+		id, _ := ctx.Get(context.AdminEntityIDKey).(int)
 		if err := h.admin.Delete(ctx, n, id); err != nil {
 			msg.Error(ctx, err.Error())
 			return h.EntityDelete(n)(ctx)

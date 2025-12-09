@@ -1,0 +1,50 @@
+package forms
+
+import (
+	"net/http"
+	"github.com/mikestefanello/pagoda/pkg/form"
+	"github.com/mikestefanello/pagoda/pkg/routenames"
+	"github.com/mikestefanello/pagoda/pkg/ui"
+	"github.com/mikestefanello/pagoda/pkg/ui/components"
+)
+
+type Cache struct {
+	CurrentValue string
+	Value        string `form:"value"`
+	form.Submission
+}
+
+templ (f *Cache) Render(r *ui.Request) {
+	<form id="cache" method={ http.MethodPost } hx-post={ r.Path(routenames.CacheSubmit) }>
+		@components.Card(components.CardParams{
+			Title: "Test the cache",
+			Body:  cacheCardBody(),
+			Color: components.ColorInfo,
+			Size:  components.SizeMedium,
+		})
+		<label for="value" class="value">Value in cache: </label>
+		if f.CurrentValue != "" {
+			@components.Badge(components.ColorSuccess, f.CurrentValue)
+		}
+		if f.CurrentValue == "" {
+			@components.Badge(components.ColorWarning, "empty")
+		}
+		@components.InputField(components.InputFieldParams{
+			Form:      f,
+			FormField: "Value",
+			Name:      "value",
+			InputType: "text",
+			Label:     "Value",
+			Value:     f.Value,
+		})
+		@components.ControlGroup(
+			components.FormButton(components.ColorPrimary, "Update cache"),
+		)
+		@components.CSRF(r)
+	</form>
+}
+
+templ cacheCardBody() {
+	<span>This route handler shows how the default in-memory cache works. Try updating the value using the form below and see how it persists after you reload the page.</span>
+	<span>HTMX makes it easy to re-render the cached value after the form is submitted.</span>
+}

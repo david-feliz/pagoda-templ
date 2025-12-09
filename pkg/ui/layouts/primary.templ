@@ -1,0 +1,124 @@
+package layouts
+
+import (
+	"github.com/mikestefanello/pagoda/ent/admin"
+	"github.com/mikestefanello/pagoda/pkg/routenames"
+	"github.com/mikestefanello/pagoda/pkg/ui"
+	"github.com/mikestefanello/pagoda/pkg/ui/components"
+	"github.com/mikestefanello/pagoda/pkg/ui/icons"
+)
+
+templ Primary(r *ui.Request, content templ.Component) {
+	<!DOCTYPE html>
+	<html lang="en" data-theme="dark">
+		<head>
+			@components.Metatags(r)
+			@components.CSS()
+			@components.JS()
+		</head>
+		<body>
+			<div class="drawer lg:drawer-open">
+				<input id="sidebar" type="checkbox" class="drawer-toggle"/>
+				<div class="drawer-content flex flex-col p-7 prose-base">
+					if len(r.Title) > 0 {
+						<h1>{ r.Title }</h1>
+					}
+					@components.FlashMessages(r)
+					@content
+					<label for="sidebar" class="btn btn-primary drawer-button lg:hidden">
+						Open drawer
+					</label>
+				</div>
+				@sidebarMenu(r)
+			</div>
+			@searchModal(r)
+			@components.HtmxListeners(r)
+		</body>
+	</html>
+}
+
+templ search() {
+	<div class="ml-2" x-data="">
+		<label class="input">
+			@icons.MagnifyingGlass()
+			<input type="search" class="grow" placeholder="Search" @click="search_modal.showModal();"/>
+		</label>
+	</div>
+}
+
+templ searchModal(r *ui.Request) {
+	<dialog id="search_modal" class="modal">
+		<div class="modal-box">
+			<form method="dialog">
+				<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+			</form>
+			<h3 class="text-lg font-bold mb-2">Search</h3>
+			<input
+				hx-get={ r.Path(routenames.Search) }
+				hx-trigger="keyup changed delay:500ms"
+				hx-target="#results"
+				name="query"
+				class="input w-full"
+				type="search"
+				placeholder="Search..."
+			/>
+			<ul id="results" class="list"></ul>
+		</div>
+		<form method="dialog" class="modal-backdrop">
+			<button>close</button>
+		</form>
+	</dialog>
+}
+
+templ sidebarMenu(r *ui.Request) {
+	<div class="drawer-side">
+		<label for="sidebar" aria-label="close sidebar" class="drawer-overlay"></label>
+		<div class="menu bg-base-200 text-base-content min-h-full w-80 p-4">
+			<div class="w-2/3 mx-auto mt-3 mb-10">
+				<img src={ ui.StaticFile("logo.png") }/>
+			</div>
+			@search()
+			<ul hx-boost="true">
+				@menuHeader("General")
+				@components.MenuLink(r, icons.Home(), "Dashboard", routenames.Home)
+				@components.MenuLink(r, icons.Info(), "About", routenames.About)
+				@components.MenuLink(r, icons.Mail(), "Contact", routenames.Contact)
+				@components.MenuLink(r, icons.Archive(), "Cache", routenames.Cache)
+				@components.MenuLink(r, icons.CircleStack(), "Task", routenames.Task)
+				@components.MenuLink(r, icons.Document(), "Files", routenames.Files)
+				@menuHeader("Account")
+				if r.IsAuth {
+					@components.MenuLink(r, icons.Exit(), "Logout", routenames.Logout)
+				}
+				if !r.IsAuth {
+					@components.MenuLink(r, icons.Enter(), "Login", routenames.Login)
+					@components.MenuLink(r, icons.UserPlus(), "Register", routenames.Register)
+					@components.MenuLink(r, icons.QuestionCircle(), "Forgot password", routenames.ForgotPasswordSubmit)
+				}
+				if r.IsAdmin {
+					@adminSubMenu(r)
+				}
+			</ul>
+		</div>
+	</div>
+}
+
+templ menuHeader(text string) {
+	<li class="menu-title mt-3 uppercase">
+		<span>{ text }</span>
+	</li>
+}
+
+templ adminSubMenu(r *ui.Request) {
+	@menuHeader("Entities")
+	for _, n := range admin.GetEntityTypes() {
+		@components.MenuLink(r, icons.PencilSquare(), n.GetName(), routenames.AdminEntityList(n.GetName()))
+	}
+	@menuHeader("Monitoring")
+	<li>
+		<a href={ templ.URL(r.Path(routenames.AdminTasks)) } target="_blank">
+			@icons.CircleStack()
+			Tasks
+		</a>
+	</li>
+}

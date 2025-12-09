@@ -1,0 +1,29 @@
+package components
+
+import (
+	"github.com/mikestefanello/pagoda/pkg/ui"
+)
+
+templ HtmxListeners(r *ui.Request) {
+	<script>
+		document.body.addEventListener('htmx:beforeSwap', function(evt) {
+			if (evt.detail.xhr.status >= 400){
+				evt.detail.shouldSwap = true;
+				evt.detail.target = htmx.find("body");
+			}
+		});
+	</script>
+	if len(r.CSRF) > 0 {
+		<script type="text/javascript">
+			document.body.addEventListener('htmx:configRequest', function(evt)  {
+				if (evt.detail.verb !== "get") {
+					evt.detail.parameters['csrf'] = { templ.JSONString(r.CSRF) };
+				}
+			})
+		</script>
+	}
+}
+
+templ HxBoost() {
+	hx-boost="true"
+}

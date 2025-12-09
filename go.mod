@@ -5,6 +5,7 @@ go 1.24.0
 require (
 	entgo.io/ent v0.14.5
 	github.com/PuerkitoBio/goquery v1.10.3
+	github.com/a-h/templ v0.3.960
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/gorilla/context v1.1.2

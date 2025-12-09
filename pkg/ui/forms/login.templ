@@ -1,0 +1,49 @@
+package forms
+
+import (
+	"net/http"
+	"github.com/mikestefanello/pagoda/pkg/form"
+	"github.com/mikestefanello/pagoda/pkg/routenames"
+	"github.com/mikestefanello/pagoda/pkg/ui"
+	"github.com/mikestefanello/pagoda/pkg/ui/components"
+)
+
+type Login struct {
+	Email    string `form:"email" validate:"required,email"`
+	Password string `form:"password" validate:"required"`
+	form.Submission
+}
+
+templ (f *Login) Render(r *ui.Request) {
+	<form id="login" method={ http.MethodPost } hx-boost="true" action={ templ.URL(r.Path(routenames.LoginSubmit)) }>
+		@components.FlashMessages(r)
+		@components.InputField(components.InputFieldParams{
+			Form:      f,
+			FormField: "Email",
+			Name:      "email",
+			InputType: "email",
+			Label:     "Email address",
+			Value:     f.Email,
+		})
+		@components.InputField(components.InputFieldParams{
+			Form:        f,
+			FormField:   "Password",
+			Name:        "password",
+			InputType:   "password",
+			Label:       "Password",
+			Placeholder: "******",
+		})
+		<div class="text-right text-primary mt-2">
+			<a href={ templ.URL(r.Path(routenames.ForgotPassword)) }>Forgot password?</a>
+		</div>
+		@components.ControlGroup(
+			components.FormButton(components.ColorPrimary, "Login"),
+			components.ButtonLink(components.ColorLink, r.Path(routenames.Home), "Cancel"),
+		)
+		@components.CSRF(r)
+		<div class="text-center text-base-content/50 mt-4">
+			Don't have an account? 
+			<a href={ templ.URL(r.Path(routenames.Register)) }>Register</a>
+		</div>
+	</form>
+}

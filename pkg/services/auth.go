@@ -89,7 +89,9 @@ func (c *AuthClient) GetAuthenticatedUserID(ctx echo.Context) (int, error) {
 	}
 
 	if sess.Values[authSessionKeyAuthenticated] == true {
-		return sess.Values[authSessionKeyUserID].(int), nil
+		if userID, ok := sess.Values[authSessionKeyUserID].(int); ok {
+			return userID, nil
+		}
 	}
 
 	return 0, NotAuthenticatedError{}
@@ -211,7 +213,9 @@ func (c *AuthClient) ValidateEmailVerificationToken(token string) (string, error
 	}
 
 	if claims, ok := t.Claims.(jwt.MapClaims); ok && t.Valid {
-		return claims["email"].(string), nil
+		if email, ok := claims["email"].(string); ok {
+			return email, nil
+		}
 	}
 
 	return "", errors.New("invalid or expired token")

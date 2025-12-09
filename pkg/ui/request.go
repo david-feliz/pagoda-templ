@@ -1,114 +1,105 @@
 package ui
 
 import (
+	"net/url"
+
+	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
 	"github.com/mikestefanello/pagoda/config"
 	"github.com/mikestefanello/pagoda/ent"
-	"github.com/mikestefanello/pagoda/pkg/context"
-	"github.com/mikestefanello/pagoda/pkg/htmx"
-	"maragu.dev/gomponents"
+	ctx "github.com/mikestefanello/pagoda/pkg/context"
 )
 
 type (
-	// Request encapsulates information about the incoming request in order to provide your ui with important and
-	// useful information needed for rendering.
+	// Request contains the context for the current request
 	Request struct {
-		// Title stores the title of the page.
-		Title string
-
-		// Context stores the request context.
-		Context echo.Context
-
-		// CurrentPath stores the path of the current request.
+		Context     echo.Context
+		Config      *config.Config
+		URL         *url.URL
 		CurrentPath string
-
-		// IsHome stores whether the requested page is the home page.
-		IsHome bool
-
-		// IsAuth stores whether the user is authenticated.
-		IsAuth bool
-
-		// IsAdmin stores whether the user is an admin.
-		IsAdmin bool
-
-		// AuthUser stores the authenticated user.
-		AuthUser *ent.User
-
-		// Metatags stores metatag values.
-		Metatags struct {
-			// Description stores the description metatag value.
-			Description string
-
-			// Keywords stores the keywords metatag values.
-			Keywords []string
-		}
-
-		// CSRF stores the CSRF token for the given request.
-		// This will only be populated if the CSRF middleware is in effect for the given request.
-		// If this is populated, all forms must include this value otherwise the requests will be rejected.
-		CSRF string
-
-		// Htmx stores information provided by HTMX about this request.
-		Htmx *htmx.Request
-
-		// Config stores the application configuration.
-		// This will only be populated if the Config middleware is installed in the router.
-		Config *config.Config
+		IsAuth      bool
+		IsAdmin     bool
+		AuthUser    *ent.User
+		Msg         string
+		Title       string
+		Metatags    Metatags
+		CSRF        string
+		Htmx        Htmx
 	}
 
-	// LayoutFunc is a callback function intended to render your page node within a given layout.
-	// This is handled as a callback to automatically support HTMX requests so that you can respond
-	// with only the page content and not the entire layout.
-	// See Request.Render().
-	LayoutFunc func(*Request, gomponents.Node) gomponents.Node
+	// Metatags contains the metatags for the current request
+	Metatags struct {
+		Description string
+		Keywords    []string
+	}
+
+	// Htmx contains the HTMX context for the current request
+	Htmx struct {
+		Enabled bool
+		Boosted bool
+		Target  string
+		Trigger string
+	}
 )
 
-// NewRequest generates a new Request using the Echo context of a given HTTP request.
-func NewRequest(ctx echo.Context) *Request {
-	p := &Request{
-		Context:     ctx,
-		CurrentPath: ctx.Request().URL.Path,
-		Htmx:        htmx.GetRequest(ctx),
+// NewRequest creates a new Request
+func NewRequest(c echo.Context) *Request {
+	u, ok := c.Get(ctx.AuthenticatedUserKey).(*ent.User)
+
+	cfg, _ := c.Get(ctx.ConfigKey).(*config.Config)
+	csrf, _ := c.Get(ctx.CSRFKey).(string)
+
+	r := &Request{
+		Context:     c,
+		Config:      cfg,
+		URL:         c.Request().URL,
+		CurrentPath: c.Request().URL.Path,
+		IsAuth:      ok && u != nil,
+		AuthUser:    u,
+		IsAdmin:     false,
+		CSRF:        csrf,
 	}
 
-	p.IsHome = p.CurrentPath == "/"
-
-	if csrf := ctx.Get(context.CSRFKey); csrf != nil {
-		p.CSRF = csrf.(string)
+	if r.IsAuth {
+		r.IsAdmin = r.AuthUser.Admin
 	}
 
-	if u := ctx.Get(context.AuthenticatedUserKey); u != nil {
-		p.IsAuth = true
-		p.AuthUser = u.(*ent.User)
-		p.IsAdmin = p.AuthUser.Admin
+	// Check for HTMX request
+	if c.Request().Header.Get("HX-Request") == "true" {
+		r.Htmx.Enabled = true
+		r.Htmx.Boosted = c.Request().Header.Get("HX-Boosted") == "true"
+		r.Htmx.Target = c.Request().Header.Get("HX-Target")
+		r.Htmx.Trigger = c.Request().Header.Get("HX-Trigger")
 	}
 
-	if cfg := ctx.Get(context.ConfigKey); cfg != nil {
-		p.Config = cfg.(*config.Config)
-	}
-
-	return p
+	return r
 }
 
-// Path generates a URL path for a given route name and optional route parameters.
-// This will only work if you've supplied names for each of your routes. It's optional to use and helps avoids
-// having duplicate, hard-coded paths and parameters all over your application.
-func (r *Request) Path(routeName string, routeParams ...any) string {
-	return r.Context.Echo().Reverse(routeName, routeParams...)
+// Path returns the URL path for the given route name and parameters
+func (r *Request) Path(name string, params ...any) string {
+	return r.Context.Echo().Reverse(name, params...)
 }
 
-// Url generates an absolute URL for a given route name and optional route parameters.
-func (r *Request) Url(routeName string, routeParams ...any) string {
-	return r.Config.App.Host + r.Path(routeName, routeParams...)
+// IsActive returns true if the given path is the current path
+func (r *Request) IsActive(path string) bool {
+	return r.CurrentPath == path
 }
 
-// Render renders a given node, optionally within a given layout based on the HTMX request headers.
-// If the request is being made by HTMX and is not boosted, this will automatically only render the node without
-// the layout, to support partial rendering.
-func (r *Request) Render(layout LayoutFunc, node gomponents.Node) error {
+// RenderTempl renders a Templ component
+func (r *Request) RenderTempl(layout func(*Request, templ.Component) templ.Component, component templ.Component) error {
+	// If HTMX is enabled and not boosted, render only the component (partial)
 	if r.Htmx.Enabled && !r.Htmx.Boosted {
-		return node.Render(r.Context.Response().Writer)
+		// If a specific target is requested, we might want to handle that logic here or in the handler.
+		// For now, we assume the component passed is what needs to be rendered.
+		// However, for OOB swaps, we might need more complex logic.
+		// For simple partials:
+		return component.Render(r.Context.Request().Context(), r.Context.Response().Writer)
 	}
 
-	return layout(r, node).Render(r.Context.Response().Writer)
+	// Otherwise, render the full layout
+	if layout != nil {
+		return layout(r, component).Render(r.Context.Request().Context(), r.Context.Response().Writer)
+	}
+
+	return component.Render(r.Context.Request().Context(), r.Context.Response().Writer)
 }
